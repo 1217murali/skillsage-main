@@ -1,0 +1,87 @@
+🚀 Project Installation and Setup Guide (PROCESS.txt)
+
+Follow these steps to set up the backend (Django) and frontend (React) components of your project and get it running locally.
+
+────────────────────────────────────────────
+Step 1: Download and Prepare the Code
+────────────────────────────────────────────
+1. Download and Extract:
+   Download the project file from the provided Drive link and extract its contents.
+
+2. Open in VS Code:
+   Open the entire extracted project folder in Visual Studio Code.
+
+3. New Terminal:
+   Open a new terminal inside VS Code (Terminal > New Terminal).
+
+────────────────────────────────────────────
+Step 2: Backend Setup (Python/Django)
+────────────────────────────────────────────
+The backend setup uses the Python files you provided (views.py, serializers.py, etc.).
+
+1. Install Dependencies:
+   In the VS Code terminal, run the following command to install all necessary Python packages:
+   ```cmd
+   pip install -r requirements.txt
+   ```
+
+2. Navigate to Backend:
+   Change directory into the backend folder:
+   ```cmd
+   cd backend
+   ```
+
+3. Apply Migrations:
+   Run the Django migration commands to create the necessary database tables:
+   ```cmd
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
+
+4. Run Backend Server:
+   Start the Django development server. Keep this terminal window open and running.
+   ```cmd
+   python manage.py runserver
+   ```
+
+   The backend should now be running, typically at:
+   👉 http://127.0.0.1:8000/
+
+────────────────────────────────────────────
+Step 3: Frontend Setup (React/npm)
+────────────────────────────────────────────
+You will need to open a second terminal for the frontend.
+
+1. Open New Terminal:
+   Open a new terminal instance in VS Code (Terminal > New Terminal).
+
+2. Navigate to Project Folder:
+   Change directory into the main project folder for the frontend:
+   ```cmd
+   cd project
+   ```
+
+3. Install Node Modules:
+   Install the frontend dependencies using npm:
+   ```cmd
+   npm install
+   ```
+
+4. Run Frontend Server:
+   Start the React development server. Keep this terminal window open and running.
+   ```cmd
+   npm run dev
+   ```
+
+────────────────────────────────────────────
+Step 4: Access the Application
+────────────────────────────────────────────
+1. Open in Browser:
+   Once the frontend server is running, open your web browser and navigate to:
+   👉 http://localhost:5173/
+
+2. Test:
+   Create a new account, log in, and explore your project!
+
+────────────────────────────────────────────
+✅ You’re all set! Both backend and frontend should now be connected and fully functional.
