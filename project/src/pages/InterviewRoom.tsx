@@ -506,7 +506,8 @@ const InterviewRoom: React.FC = () => {
     isProcessingQuestionRef.current = true;
     const question = session.questions[questionIndex];
     const questionText = question.question;
-    const allocatedTime = question.allocated_time;
+    const allocatedTime = 20; // Reduced to 20s as requested
+    // const allocatedTime = question.allocated_time;
 
     setCurrentQuestionIndex(questionIndex);
     isUserStoppedRef.current = false; // Reset stop flag for the new question
@@ -676,45 +677,50 @@ const InterviewRoom: React.FC = () => {
     const userMessage: Message = {
       id: Date.now() + 1000,
       type: 'user',
-      content: 'Answer recorded and submitted.', // Simplified text
+      content: 'Answer recorded.',
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
     setMessages(prev => [...prev, userMessage]);
     showSystemMessage("Analyzing your answer...", 3000);
 
     // 💥 INTERACTIVE FEEDBACK LOGIC
     // 1. Submit and await feedback
-    submitAnswer(orderId, answerDisplay, timeTaken, audioBlob).then((feedbackData) => {
+    submitAnswer(orderId, answerDisplay, timeTaken, audioBlob).then((data) => {
 
-      if (feedbackData) {
-        // 2. Display Feedback Message
-        const feedbackMessage: Message = {
-          id: Date.now() + 2000,
-          type: 'bot',
-          content: feedbackData.feedback || "Answer recorded.",
-          feedback: feedbackData.feedback,
-          improvement_tip: feedbackData.improvement_tip,
-          rating: feedbackData.rating,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, feedbackMessage]);
+      // Create a unified feedback object, using backend data or fallback
+      const feedbackData = data || {
+        conversational_response: "Thank you. I've recorded your answer.",
+        feedback: "Answer recorded successfully (Offline/Error mode).",
+        improvement_tip: "Check your internet connection if this persists.",
+        rating: 0
+      };
 
-        // 3. Speak Feedback -> Then Move Next
-        const textToSpeak = feedbackData.feedback || "Answer recorded.";
-        speakText(textToSpeak, () => {
-          setTimeout(() => {
-            isSubmissionPendingRef.current = false;
-            moveToNextQuestion();
-          }, 2000); // 2s delay after speaking before next question
-        });
+      // 2. Display Feedback Message
+      const feedbackMessage: Message = {
+        id: Date.now() + 2000,
+        type: 'bot',
+        // Use conversational response for the main chat bubble content
+        content: feedbackData.conversational_response || feedbackData.feedback || "Answer recorded.",
+        feedback: feedbackData.feedback,
+        improvement_tip: feedbackData.improvement_tip,
+        rating: feedbackData.rating,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, feedbackMessage]);
 
-      } else {
-        // Fallback if no feedback (error/offline)
-        isSubmissionPendingRef.current = false;
-        moveToNextQuestion();
-      }
+      // 3. Speak Feedback -> Then Move Next
+      // Speak the conversational response
+      const textToSpeak = feedbackData.conversational_response || feedbackData.feedback || "Answer recorded.";
+      speakText(textToSpeak, () => {
+        setTimeout(() => {
+          // Only move next IF the interview isn't already marked completed
+          if (isProcessingQuestionRef.current) return;
+
+          isSubmissionPendingRef.current = false;
+          moveToNextQuestion();
+        }, 2000); // 2s delay slightly for better pacing
+      });
     });
   };
 
@@ -734,7 +740,7 @@ const InterviewRoom: React.FC = () => {
     // Use FormData for file upload
     const formData = new FormData();
     formData.append('session_id', sessionId.toString());
-    formData.append('question_order', orderId.toString());
+    formData.append('order_id', orderId.toString());
     formData.append('time_taken', timeTaken.toString());
 
     // Send the WAV file using the key 'answer_audio' expected by the Django backend
@@ -850,9 +856,13 @@ const InterviewRoom: React.FC = () => {
         const data = await response.json();
         const stars = data.stars || "⭐⭐⭐";
         const rating = data.average_rating || "N/A";
-        // const feedback = data.feedback || "Good effort!"; // Feedback is already in the summary text if needed, or we can just show the high-level one.
+        const spokenRating = data.spoken_rating || `Rating: ${rating} out of 5 stars`; // Fallback if backend doesn't return it yet
 
+        // Visual Summary
         summaryText = `Interview Complete! Rating: ${rating}/5 ${stars}. ${data.feedback}`;
+
+        // Spoken Summary (cleaner for TTS)
+        const spokenText = `Interview Complete! ${spokenRating}. ${data.feedback}`;
 
         // Display Summary
         setMessages(prev => [...prev, {
@@ -862,7 +872,7 @@ const InterviewRoom: React.FC = () => {
           timestamp: new Date()
         }]);
 
-        speakText(summaryText, () => {
+        speakText(spokenText, () => { // Speak the cleaner version
           setTimeout(() => {
             navigate('/dashboard'); // Redirect to dashboard
           }, 5000);

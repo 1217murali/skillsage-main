@@ -33,13 +33,22 @@ export default function Interview() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
+    // Safety check: If in interview mode but no topic selected (e.g. on reload), go back to selection
+    if (view === 'interview' && !selectedTopic) {
+      setView('selection');
+      params.delete('session');
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      return;
+    }
+
     if (view === 'interview') {
       params.set('session', 'true');
     } else {
       params.delete('session');
     }
     navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-  }, [view, navigate, location.pathname, location.search]);
+  }, [view, navigate, location.pathname, location.search, selectedTopic]);
 
   const handleSelectInterview = (topicValue: string) => {
     setSelectedTopic(topicValue);
